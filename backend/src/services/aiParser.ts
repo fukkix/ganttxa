@@ -13,7 +13,7 @@ if (API_PROVIDER === 'openrouter') {
     baseURL: 'https://openrouter.ai/api/v1',
     defaultHeaders: {
       'HTTP-Referer': process.env.APP_URL || 'http://localhost:5173',
-      'X-Title': 'GanttFlow',
+      'X-Title': 'GanttXa',
     },
   })
 } else {

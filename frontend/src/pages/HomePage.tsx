@@ -102,7 +102,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">GanttFlow</h1>
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">GanttXa</h1>
           <p className="text-xl text-gray-600 mb-8">
             在线甘特图协作工具 · AI 智能解析项目文件
           </p>

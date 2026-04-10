@@ -1,4 +1,4 @@
--- GanttFlow 测试数据
+-- GanttXa 测试数据
 
 -- 插入测试用户
 INSERT INTO users (email, password_hash, display_name) VALUES

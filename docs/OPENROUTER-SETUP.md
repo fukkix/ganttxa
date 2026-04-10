@@ -1,6 +1,6 @@
 # 使用 OpenRouter API 配置指南
 
-GanttFlow 支持使用 OpenRouter 作为 AI API 提供商，这样你可以使用一个 API Key 访问多个 AI 模型。
+GanttXa 支持使用 OpenRouter 作为 AI API 提供商，这样你可以使用一个 API Key 访问多个 AI 模型。
 
 ## 为什么使用 OpenRouter？
 
@@ -34,7 +34,7 @@ OPENROUTER_API_KEY=sk-or-v1-xxxxx
 APP_URL=http://localhost:5173
 
 # 其他配置保持不变
-DATABASE_URL=postgresql://postgres:password@localhost:5432/ganttflow
+DATABASE_URL=postgresql://postgres:password@localhost:5432/ganttxa
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-secret-key
 PORT=3000

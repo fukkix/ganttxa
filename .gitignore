@@ -8,6 +8,9 @@ __pycache__/
 pip-log.txt
 pip-delete-this-directory.txt
 
+# Kiro AI assistant
+.kiro/
+
 # Environment variables
 .env
 .env.local

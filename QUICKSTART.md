@@ -1,4 +1,4 @@
-# GanttFlow 快速启动
+# GanttXa 快速启动
 
 ## 1. 启动数据库（已完成 ✅）
 
@@ -93,7 +93,7 @@ docker compose restart postgres
 docker compose ps
 
 # 进入 PostgreSQL
-docker exec -it ganttflow-postgres psql -U postgres -d ganttflow
+docker exec -it ganttxa-postgres psql -U postgres -d ganttxa
 ```
 
 ## 故障排除

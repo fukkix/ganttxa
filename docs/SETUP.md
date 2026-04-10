@@ -1,4 +1,4 @@
-# GanttFlow 环境搭建指南
+# GanttXa 环境搭建指南
 
 ## 前置要求
 
@@ -11,8 +11,8 @@
 ### 1. 克隆仓库
 
 ```bash
-git clone https://github.com/your-org/ganttflow.git
-cd ganttflow
+git clone https://github.com/fukkix/gattxa.git
+cd gattxa
 ```
 
 ### 2. 使用 Docker Compose 启动（推荐）
@@ -70,7 +70,7 @@ npm run dev
 
 ```bash
 # 初始化数据库
-psql -U postgres -d ganttflow -f database/init.sql
+psql -U postgres -d ganttxa -f database/init.sql
 ```
 
 ## 验证安装
@@ -85,7 +85,7 @@ curl http://localhost:3000/health
 ```json
 {
   "success": true,
-  "message": "GanttFlow API is running",
+  "message": "GanttXa API is running",
   "timestamp": "2026-04-10T...",
   "environment": "development"
 }
@@ -93,7 +93,7 @@ curl http://localhost:3000/health
 
 ### 前端访问
 
-打开浏览器访问 http://localhost:5173，应该看到 GanttFlow 首页。
+打开浏览器访问 http://localhost:5173，应该看到 GanttXa 首页。
 
 ## 常见问题
 

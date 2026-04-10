@@ -1,4 +1,4 @@
-# GanttFlow API 文档
+# GanttXa API 文档
 
 ## 基础信息
 
@@ -279,7 +279,7 @@ GET /health
 ```json
 {
   "success": true,
-  "message": "GanttFlow API is running",
+  "message": "GanttXa API is running",
   "timestamp": "2026-04-10T...",
   "environment": "development"
 }

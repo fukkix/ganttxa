@@ -1,4 +1,4 @@
-# GanttFlow 快速开始指南
+# GanttXa 快速开始指南
 
 ## 前置要求
 
@@ -34,11 +34,11 @@ npm run dev
 docker compose up -d postgres redis
 
 # 2. 初始化数据库
-docker exec ganttflow-postgres psql -U postgres -c "CREATE DATABASE ganttflow;"
-cat database/init.sql | docker exec -i ganttflow-postgres psql -U postgres -d ganttflow
+docker exec ganttxa-postgres psql -U postgres -c "CREATE DATABASE ganttxa;"
+cat database/init.sql | docker exec -i ganttxa-postgres psql -U postgres -d ganttxa
 
 # 3. 插入测试数据（可选）
-cat database/seed.sql | docker exec -i ganttflow-postgres psql -U postgres -d ganttflow
+cat database/seed.sql | docker exec -i ganttxa-postgres psql -U postgres -d ganttxa
 
 # 4. 启动后端
 cd backend
@@ -120,6 +120,9 @@ docker compose logs postgres
 
 # 重启数据库
 docker compose restart postgres
+
+# 进入 PostgreSQL
+docker exec -it ganttxa-postgres psql -U postgres -d ganttxa
 ```
 
 ### 4. npm install 失败
@@ -168,7 +171,7 @@ npm install
 ## 项目结构
 
 ```
-ganttflow/
+ganttxa/
 ├── frontend/           # React 前端
 │   ├── src/
 │   │   ├── components/ # 组件
@@ -193,7 +196,7 @@ ganttflow/
 ## 下一步
 
 - 查看 [API 文档](docs/API.md)
-- 查看 [开发计划](GanttFlow_开发计划.md)
+- 查看 [开发计划](GanttXa_开发计划.md)
 - 查看 [产品需求](Ganttxa_PRD.docx)
 
 ## 获取帮助
