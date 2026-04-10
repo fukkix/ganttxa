@@ -49,3 +49,4 @@ export const getClient = async () => {
 }
 
 export default pool
+export { pool }

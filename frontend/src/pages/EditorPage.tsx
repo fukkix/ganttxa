@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useProjectStore } from '../store/projectStore'
 import TaskForm from '../components/TaskForm'
 import TaskList from '../components/TaskList'
 import GanttChart from '../components/GanttChart'
 import GanttControls from '../components/GanttControls'
+import ShareDialog from '../components/ShareDialog'
+import ExportDialog from '../components/ExportDialog'
 import { Task } from '../types'
 
 export default function EditorPage() {
@@ -13,6 +15,9 @@ export default function EditorPage() {
   const { currentProject, setProject, isSaving, lastSaved } = useProjectStore()
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [showShareDialog, setShowShareDialog] = useState(false)
+  const [showExportDialog, setShowExportDialog] = useState(false)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     // TODO: 从 API 加载项目数据
@@ -51,13 +56,11 @@ export default function EditorPage() {
   }
 
   const handleShare = () => {
-    // TODO: 实现分享功能
-    console.log('生成分享链接')
+    setShowShareDialog(true)
   }
 
   const handleExport = () => {
-    // TODO: 实现导出功能
-    console.log('导出甘特图')
+    setShowExportDialog(true)
   }
 
   return (
@@ -143,13 +146,30 @@ export default function EditorPage() {
         <main className="flex-1 flex flex-col overflow-hidden">
           <GanttControls />
           <div className="flex-1 overflow-auto p-4">
-            <GanttChart />
+            <GanttChart ref={canvasRef} />
           </div>
         </main>
       </div>
 
       {/* 任务表单弹窗 */}
       {showTaskForm && <TaskForm task={editingTask} onClose={handleCloseForm} />}
+
+      {/* 分享对话框 */}
+      {showShareDialog && currentProject && (
+        <ShareDialog
+          projectId={currentProject.id}
+          projectName={currentProject.name}
+          onClose={() => setShowShareDialog(false)}
+        />
+      )}
+
+      {/* 导出对话框 */}
+      {showExportDialog && (
+        <ExportDialog
+          canvasRef={canvasRef}
+          onClose={() => setShowExportDialog(false)}
+        />
+      )}
     </div>
   )
 }

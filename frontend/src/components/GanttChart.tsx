@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react'
 import { useProjectStore } from '../store/projectStore'
 import {
   dateToX,
@@ -10,11 +10,14 @@ import {
 } from '../utils/ganttRenderer'
 import dayjs from 'dayjs'
 
-export default function GanttChart() {
+const GanttChart = forwardRef<HTMLCanvasElement>((props, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const { tasks, ganttConfig } = useProjectStore()
   const [dimensions, setDimensions] = useState({ width: 1200, height: 600 })
+
+  // 暴露 canvas ref 给父组件
+  useImperativeHandle(ref, () => canvasRef.current as HTMLCanvasElement)
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -209,4 +212,8 @@ export default function GanttChart() {
       <canvas ref={canvasRef} className="cursor-pointer" />
     </div>
   )
-}
+})
+
+GanttChart.displayName = 'GanttChart'
+
+export default GanttChart
