@@ -10,7 +10,7 @@ import {
 } from '../utils/ganttRenderer'
 import dayjs from 'dayjs'
 
-const GanttChart = forwardRef<HTMLCanvasElement>((props, ref) => {
+const GanttChart = forwardRef<HTMLCanvasElement>((_props, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const { tasks, ganttConfig } = useProjectStore()
@@ -82,7 +82,7 @@ const GanttChart = forwardRef<HTMLCanvasElement>((props, ref) => {
     labels: Array<{ date: string; label: string }>,
     startDate: string
   ) => {
-    const { headerHeight, leftPanelWidth } = DEFAULT_DIMENSIONS
+    const { headerHeight } = DEFAULT_DIMENSIONS
 
     // 绘制表头背景
     ctx.fillStyle = '#f3f4f6'
@@ -136,8 +136,8 @@ const GanttChart = forwardRef<HTMLCanvasElement>((props, ref) => {
     ctx.lineWidth = 1
   }
 
-  const drawTasks = (ctx: CanvasRenderingContext2D, tasks: Task[], startDate: string) => {
-    const { rowHeight, headerHeight, leftPanelWidth } = DEFAULT_DIMENSIONS
+  const drawTasks = (ctx: CanvasRenderingContext2D, tasks: any[], startDate: string) => {
+    const { rowHeight, headerHeight } = DEFAULT_DIMENSIONS
 
     tasks.forEach((task, index) => {
       const y = headerHeight + index * rowHeight + 10

@@ -1,5 +1,8 @@
 import dayjs from 'dayjs'
-import { Task, GanttConfig } from '../types'
+import weekOfYear from 'dayjs/plugin/weekOfYear'
+import { Task } from '../types'
+
+dayjs.extend(weekOfYear)
 
 export interface GanttDimensions {
   dayWidth: number

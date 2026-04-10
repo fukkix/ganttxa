@@ -1,4 +1,7 @@
 import dayjs from 'dayjs'
+import weekOfYear from 'dayjs/plugin/weekOfYear'
+
+dayjs.extend(weekOfYear)
 
 export const formatDate = (date: string | Date, format = 'YYYY-MM-DD'): string => {
   return dayjs(date).format(format)
