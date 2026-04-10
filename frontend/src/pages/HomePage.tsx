@@ -1,216 +1,215 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import FileUpload from '../components/FileUpload'
-import ParsingProgress from '../components/ParsingProgress'
-import FieldMapping from '../components/FieldMapping'
-import { parseFile as parseFileUtil, convertToText } from '../utils/fileParser'
-import { uploadFile, parseFile, ParseResult } from '../api/upload'
-import { useProjectStore } from '../store/projectStore'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { isAuthenticated, getLocalUser, logout } from '../api/auth'
 
 export default function HomePage() {
   const navigate = useNavigate()
-  const { setTasks } = useProjectStore()
-  const [showUpload, setShowUpload] = useState(false)
-  const [parsingStatus, setParsingStatus] = useState<
-    'uploading' | 'processing' | 'completed' | 'failed' | null
-  >(null)
-  const [fileName, setFileName] = useState('')
-  const [progress, setProgress] = useState(0)
-  const [error, setError] = useState<string | null>(null)
-  const [parseResult, setParseResult] = useState<ParseResult | null>(null)
+  const [user, setUser] = useState(getLocalUser())
+  const [showUserMenu, setShowUserMenu] = useState(false)
 
-  const handleFileSelect = async (file: File) => {
-    setShowUpload(false)
-    setFileName(file.name)
-    setParsingStatus('uploading')
-    setProgress(0)
-    setError(null)
+  useEffect(() => {
+    setUser(getLocalUser())
+  }, [])
 
-    try {
-      // 1. 客户端解析文件
-      setProgress(20)
-      const parsedData = await parseFileUtil(file)
-      const fileContent = convertToText(parsedData)
-
-      // 2. 上传文件
-      setProgress(40)
-      const uploadResponse = await uploadFile(file)
-
-      // 3. 触发 AI 解析
-      setParsingStatus('processing')
-      setProgress(60)
-
-      const parseResponse = await parseFile(uploadResponse.id, fileContent)
-
-      setProgress(100)
-
-      if (parseResponse.status === 'completed' && parseResponse.result) {
-        setParseResult(parseResponse.result)
-        setParsingStatus('completed')
-
-        // 延迟显示字段映射界面
-        setTimeout(() => {
-          setParsingStatus(null)
-        }, 1000)
-      } else if (parseResponse.status === 'failed') {
-        throw new Error(parseResponse.errorMessage || '解析失败')
-      }
-    } catch (err: any) {
-      console.error('File parsing error:', err)
-      setError(err.message || '文件解析失败，请重试')
-      setParsingStatus('failed')
-    }
+  const handleLogout = () => {
+    logout()
+    setUser(null)
+    setShowUserMenu(false)
   }
 
-  const handleMappingConfirm = (updatedMapping: Record<string, string>) => {
-    if (!parseResult) return
-
-    // 将解析结果转换为任务列表
-    const tasks = parseResult.tasks.map((task, index) => ({
-      id: `task_${Date.now()}_${index}`,
-      projectId: 'temp',
-      name: task.name,
-      startDate: task.startDate,
-      endDate: task.endDate,
-      assignee: task.assignee,
-      phase: task.phase,
-      description: task.description,
-      isMilestone: false,
-      dependencies: [],
-      position: index,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }))
-
-    // 保存到状态
-    setTasks(tasks)
-
-    // 跳转到编辑器
+  const handleCreateProject = () => {
+    if (!isAuthenticated()) {
+      navigate('/login')
+      return
+    }
     navigate('/editor/new')
   }
 
-  const handleMappingCancel = () => {
-    setParseResult(null)
-  }
-
-  const handleRetry = () => {
-    setParsingStatus(null)
-    setShowUpload(true)
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">GanttXa</h1>
-          <p className="text-xl text-gray-600 mb-8">
-            在线甘特图协作工具 · AI 智能解析项目文件
-          </p>
-          <div className="flex justify-center gap-4">
-            <Link
-              to="/editor/new"
-              className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-            >
-              创建项目
-            </Link>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-surface-container-low sticky top-0 z-50 transition-all">
+        <div className="max-w-7xl mx-auto px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <h1 className="text-xl font-black tracking-tight text-primary font-headline">
+              GanttXa
+            </h1>
+            <nav className="hidden md:flex gap-6">
+              <a href="#" className="text-on-surface-variant font-medium hover:text-primary transition-colors text-sm">
+                Dashboard
+              </a>
+              <a href="#" className="text-on-surface-variant font-medium hover:text-primary transition-colors text-sm">
+                Templates
+              </a>
+              <a href="#" className="text-on-surface-variant font-medium hover:text-primary transition-colors text-sm">
+                Pricing
+              </a>
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-surface-container rounded-xl transition-all"
+                >
+                  <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-sm font-bold">
+                    {user.displayName.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium text-on-surface hidden md:block">
+                    {user.displayName}
+                  </span>
+                </button>
+
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-surface-container-lowest rounded-xl shadow-ambient-lg py-2">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full px-4 py-2 text-left text-sm text-on-surface hover:bg-surface-container-low transition-colors"
+                    >
+                      退出登录
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container rounded-xl transition-all"
+                >
+                  登录
+                </button>
+                <button
+                  onClick={() => navigate('/register')}
+                  className="px-4 py-2 text-sm font-semibold bg-primary text-on-primary rounded-xl hover:opacity-90 transition-all"
+                >
+                  注册
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <main className="max-w-7xl mx-auto px-8 py-16">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="px-3 py-1 bg-primary-fixed-dim text-on-primary-fixed-variant rounded-full text-[10px] font-bold uppercase tracking-widest">
+                Product Spotlight
+              </span>
+              <span className="text-on-surface-variant text-sm">v2.4 Smart Collaboration</span>
+            </div>
+            <h1 className="font-headline text-5xl font-extrabold text-on-surface tracking-tight mb-3 leading-tight">
+              GanttXa
+            </h1>
+            <p className="text-on-surface-variant text-xl leading-relaxed">
+              在线甘特图协作工具 · AI 智能解析项目文件
+            </p>
+          </div>
+
+          <div className="flex gap-3">
             <button
-              onClick={() => setShowUpload(true)}
-              className="px-8 py-3 bg-white text-indigo-600 border-2 border-indigo-600 rounded-lg hover:bg-indigo-50 transition"
+              onClick={handleCreateProject}
+              className="flex items-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-xl font-bold text-sm hover:opacity-90 transition-all shadow-ambient active:scale-95"
             >
-              📤 上传文件
+              <span className="material-symbols-outlined text-[20px]">add</span>
+              创建项目
+            </button>
+            <button className="flex items-center gap-2 px-5 py-3 bg-surface-container-highest text-on-surface rounded-xl font-bold text-sm hover:bg-surface-container transition-all">
+              <span className="material-symbols-outlined text-[20px]">upload</span>
+              上传文件
             </button>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="text-3xl mb-4">📝</div>
-            <h3 className="text-lg font-semibold mb-2">双轨输入</h3>
-            <p className="text-gray-600">手动填写或上传 Excel/Word，AI 自动解析</p>
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+          <div className="p-8 bg-surface-container-low rounded-3xl border border-transparent hover:border-primary/20 transition-all group">
+            <div className="w-12 h-12 rounded-2xl bg-primary text-on-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined">auto_awesome</span>
+            </div>
+            <h4 className="font-headline font-bold text-lg text-on-surface mb-3">AI 智能解析</h4>
+            <p className="text-on-surface-variant text-sm leading-relaxed">
+              从 Excel、Word 或 CSV 文件中一键提取任务。30 秒内自动生成完整的甘特图，告别手动输入的繁琐。
+            </p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="text-3xl mb-4">🎨</div>
-            <h3 className="text-lg font-semibold mb-2">可视化编辑</h3>
-            <p className="text-gray-600">所见即所得的甘特图编辑器</p>
+
+          <div className="p-8 bg-surface-container-low rounded-3xl border border-transparent hover:border-secondary/20 transition-all group">
+            <div className="w-12 h-12 rounded-2xl bg-secondary text-on-secondary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined">edit_note</span>
+            </div>
+            <h4 className="font-headline font-bold text-lg text-on-surface mb-3">双轨输入</h4>
+            <p className="text-on-surface-variant text-sm leading-relaxed">
+              灵活选择手动填写关键任务，或直接上传现有项目文件。AI 会自动识别并填充所有关联字段。
+            </p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="text-3xl mb-4">🔗</div>
-            <h3 className="text-lg font-semibold mb-2">一键分享</h3>
-            <p className="text-gray-600">生成专属链接，无需注册即可查看</p>
+
+          <div className="p-8 bg-surface-container-low rounded-3xl border border-transparent hover:border-tertiary/20 transition-all group">
+            <div className="w-12 h-12 rounded-2xl bg-tertiary text-on-tertiary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined">link</span>
+            </div>
+            <h4 className="font-headline font-bold text-lg text-on-surface mb-3">一键分享</h4>
+            <p className="text-on-surface-variant text-sm leading-relaxed">
+              生成专属加密链接。团队成员无需注册账号即可在线查看进度，实现真正的无缝协作。
+            </p>
           </div>
         </div>
 
-        {/* 功能亮点 */}
-        <div className="mt-16 max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
-            🤖 AI 智能解析，30 秒生成甘特图
-          </h2>
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3">支持的文件格式</h4>
-                <ul className="space-y-2 text-gray-600">
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    Excel (.xlsx, .xls)
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    Word (.docx)
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    CSV 文件
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3">智能识别字段</h4>
-                <ul className="space-y-2 text-gray-600">
-                  <li className="flex items-center">
-                    <span className="text-blue-500 mr-2">•</span>
-                    任务名称与描述
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-blue-500 mr-2">•</span>
-                    开始/结束日期
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-blue-500 mr-2">•</span>
-                    负责人与阶段
-                  </li>
-                </ul>
+        {/* Projects Section */}
+        {user && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-headline-md font-headline text-on-surface">我的项目</h2>
+              <button
+                onClick={handleCreateProject}
+                className="text-sm text-primary font-medium hover:underline"
+              >
+                查看全部 →
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Empty State */}
+              <div className="col-span-full p-12 bg-surface-container-low rounded-3xl text-center">
+                <div className="w-16 h-16 rounded-2xl bg-surface-container-highest mx-auto mb-4 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-3xl text-on-surface-variant">
+                    folder_open
+                  </span>
+                </div>
+                <h3 className="font-headline font-bold text-lg text-on-surface mb-2">
+                  还没有项目
+                </h3>
+                <p className="text-on-surface-variant text-sm mb-6">
+                  创建你的第一个项目，开始使用 GanttXa
+                </p>
+                <button
+                  onClick={handleCreateProject}
+                  className="px-6 py-2 bg-primary text-on-primary rounded-xl font-bold text-sm hover:opacity-90 transition-all"
+                >
+                  创建项目
+                </button>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        )}
+      </main>
 
-      {/* 文件上传弹窗 */}
-      {showUpload && (
-        <FileUpload onFileSelect={handleFileSelect} onClose={() => setShowUpload(false)} />
-      )}
-
-      {/* 解析进度 */}
-      {parsingStatus && (
-        <ParsingProgress
-          status={parsingStatus}
-          fileName={fileName}
-          progress={progress}
-          error={error || undefined}
-          onRetry={handleRetry}
-          onClose={() => setParsingStatus(null)}
-        />
-      )}
-
-      {/* 字段映射 */}
-      {parseResult && !parsingStatus && (
-        <FieldMapping
-          parseResult={parseResult}
-          onConfirm={handleMappingConfirm}
-          onCancel={handleMappingCancel}
-        />
-      )}
+      {/* FAB */}
+      <button
+        onClick={handleCreateProject}
+        className="fixed bottom-8 right-8 w-16 h-16 bg-primary text-on-primary rounded-2xl shadow-ambient-lg flex items-center justify-center hover:scale-110 hover:rotate-90 active:scale-95 transition-all z-50 group"
+      >
+        <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+          add
+        </span>
+        <span className="absolute right-20 bg-on-surface text-surface px-4 py-2 rounded-lg text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-ambient-lg">
+          创建新项目
+        </span>
+      </button>
     </div>
   )
 }
