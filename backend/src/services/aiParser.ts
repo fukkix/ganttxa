@@ -1,8 +1,27 @@
 import Anthropic from '@anthropic-ai/sdk'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY,
-})
+// 检测使用的 API 提供商
+const API_PROVIDER = process.env.API_PROVIDER || 'anthropic' // 'anthropic' 或 'openrouter'
+const API_KEY = process.env.CLAUDE_API_KEY || process.env.OPENROUTER_API_KEY
+
+let anthropic: Anthropic
+
+if (API_PROVIDER === 'openrouter') {
+  // OpenRouter 配置
+  anthropic = new Anthropic({
+    apiKey: API_KEY,
+    baseURL: 'https://openrouter.ai/api/v1',
+    defaultHeaders: {
+      'HTTP-Referer': process.env.APP_URL || 'http://localhost:5173',
+      'X-Title': 'GanttFlow',
+    },
+  })
+} else {
+  // Anthropic 官方配置
+  anthropic = new Anthropic({
+    apiKey: API_KEY,
+  })
+}
 
 export interface ParsedTask {
   name: string
@@ -74,8 +93,14 @@ export const parseFileWithAI = async (
   fileName: string
 ): Promise<ParseResult> => {
   try {
+    // 根据 API 提供商选择模型
+    const model =
+      API_PROVIDER === 'openrouter'
+        ? 'anthropic/claude-3.5-sonnet' // OpenRouter 的模型名称
+        : 'claude-sonnet-4-20250514' // Anthropic 官方模型名称
+
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model,
       max_tokens: 4096,
       messages: [
         {

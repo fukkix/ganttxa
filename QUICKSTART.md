@@ -11,12 +11,33 @@ cd backend
 cp .env.example .env
 ```
 
-编辑 `backend/.env` 文件，填写你的 Claude API Key：
+### 选项 A：使用 OpenRouter（推荐）
+
+编辑 `backend/.env` 文件：
+```env
+API_PROVIDER=openrouter
+OPENROUTER_API_KEY=sk-or-v1-xxxxx
+APP_URL=http://localhost:5173
 ```
+
+获取 OpenRouter API Key：https://openrouter.ai/keys
+
+**优势：**
+- ✅ 更便宜
+- ✅ 一个 Key 访问多个模型
+- ✅ 更好的可用性
+
+详细配置：[docs/OPENROUTER-SETUP.md](docs/OPENROUTER-SETUP.md)
+
+### 选项 B：使用 Anthropic 官方 API
+
+编辑 `backend/.env` 文件：
+```env
+API_PROVIDER=anthropic
 CLAUDE_API_KEY=sk-ant-api03-xxxxx
 ```
 
-获取 API Key：https://console.anthropic.com/
+获取 Anthropic API Key：https://console.anthropic.com/
 
 ## 3. 安装并启动后端
 
