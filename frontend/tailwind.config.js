@@ -67,6 +67,12 @@ export default {
         'error-container': '#ffdad6',
         'on-error': '#ffffff',
         'on-error-container': '#93000a',
+
+        // Warning Colors
+        'warning': '#F59E0B',
+        'warning-container': '#FEF3C7',
+        'on-warning': '#ffffff',
+        'on-warning-container': '#92400E',
       },
       borderRadius: {
         'DEFAULT': '0.125rem',

@@ -13,14 +13,16 @@ export interface AISettings {
 
 const MODELS = {
   anthropic: [
-    { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4 (2025-05-14) 推荐' },
+    { value: 'claude-sonnet-4.6-20250514', label: 'Claude Sonnet 4.6 (2025-05-14) 🔥 最新推荐' },
+    { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4 (2025-05-14)' },
     { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (2024-10-22)' },
     { value: 'claude-3-5-sonnet-20240620', label: 'Claude 3.5 Sonnet (2024-06-20)' },
     { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
     { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku (快速)' },
   ],
   openrouter: [
-    { value: 'anthropic/claude-sonnet-4', label: 'Claude Sonnet 4 (最新) 推荐' },
+    { value: 'anthropic/claude-sonnet-4.6', label: 'Claude Sonnet 4.6 🔥 最新推荐' },
+    { value: 'anthropic/claude-sonnet-4', label: 'Claude Sonnet 4' },
     { value: 'anthropic/claude-3.5-sonnet:beta', label: 'Claude 3.5 Sonnet (Beta)' },
     { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet' },
     { value: 'anthropic/claude-3-opus', label: 'Claude 3 Opus' },
@@ -232,7 +234,7 @@ export default function AISettingsDialog({ onClose, onSave }: AISettingsDialogPr
                 ))}
               </select>
               <p className="mt-2 text-xs text-on-surface-variant">
-                推荐使用 Claude Sonnet 4，性能和成本平衡最佳
+                推荐使用 Claude Sonnet 4.6（最新），智能程度更高，日期解析更准确
               </p>
             </div>
 

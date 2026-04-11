@@ -129,20 +129,109 @@ export default function FileUploadWithParsing({
     setError(null)
   }
 
-  const handleMappingComplete = (updatedMapping: Record<string, string>) => {
-    if (onComplete && parseResult) {
-      // 更新 parseResult 中的 fieldMapping
-      const updatedResult = {
-        ...parseResult,
-        fieldMapping: updatedMapping,
+  const handleMappingComplete = async (updatedMapping: Record<string, string>) => {
+    try {
+      if (!parseResult) {
+        throw new Error('解析结果不存在')
       }
-      onComplete(updatedResult)
-    } else {
-      // 默认行为：创建新项目并导航到编辑器
-      // TODO: 实现创建项目并导入任务
-      navigate('/editor/new')
+
+      console.log('✅ 开始导入任务...')
+      
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('未登录，请先登录')
+      }
+
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
+      // 1. 创建项目
+      console.log('📝 创建项目...')
+      const projectResponse = await fetch(`${API_URL}/api/projects`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: `AI 解析项目 - ${new Date().toLocaleDateString()}`,
+          description: `从文件 ${fileName} 解析导入，共 ${parseResult.tasks.length} 个任务`
+        })
+      })
+
+      if (!projectResponse.ok) {
+        const errorText = await projectResponse.text()
+        console.error('❌ 创建项目失败，状态码:', projectResponse.status)
+        console.error('❌ 响应内容:', errorText)
+        
+        let errorMessage = '创建项目失败'
+        try {
+          const errorData = JSON.parse(errorText)
+          errorMessage = errorData.error || errorData.message || errorMessage
+        } catch (e) {
+          errorMessage = errorText || errorMessage
+        }
+        
+        throw new Error(errorMessage)
+      }
+
+      const projectData = await projectResponse.json()
+      const projectId = projectData.data.id
+      console.log('✅ 项目创建成功，ID:', projectId)
+
+      // 2. 批量添加任务
+      console.log('📝 添加任务...')
+      const tasksToImport = parseResult.tasks.map((task, index) => ({
+        name: task.name,
+        startDate: task.startDate,
+        endDate: task.endDate,
+        assignee: task.assignee || '',
+        phase: task.phase || '默认阶段',
+        description: task.description || '',
+        isMilestone: false,
+        dependencies: [],
+        order: index
+      }))
+      
+      console.log('📝 准备导入的任务:', tasksToImport)
+      
+      const tasksResponse = await fetch(`${API_URL}/api/projects/${projectId}/tasks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          tasks: tasksToImport
+        })
+      })
+
+      console.log('📝 任务导入响应状态:', tasksResponse.status)
+
+      if (!tasksResponse.ok) {
+        const errorText = await tasksResponse.text()
+        console.error('❌ 添加任务失败，状态码:', tasksResponse.status)
+        console.error('❌ 响应内容:', errorText)
+        
+        let errorMessage = '添加任务失败'
+        try {
+          const errorData = JSON.parse(errorText)
+          errorMessage = errorData.error || errorData.message || errorMessage
+        } catch (e) {
+          errorMessage = errorText || errorMessage
+        }
+        
+        throw new Error(errorMessage)
+      }
+
+      console.log('✅ 任务导入成功，数量:', parseResult.tasks.length)
+
+      // 3. 跳转到编辑器页面
+      navigate(`/editor/${projectId}`)
+      onClose()
+    } catch (error: any) {
+      console.error('❌ 导入任务失败:', error)
+      alert(`导入任务失败: ${error.message}`)
     }
-    onClose()
   }
 
   return (

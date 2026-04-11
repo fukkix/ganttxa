@@ -158,6 +158,11 @@ export default function TaskList({ onEditTask }: TaskListProps) {
                               <h4 className="text-body-md font-medium text-on-surface truncate">
                                 {task.name}
                               </h4>
+                              {!task.startDate && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-label-sm bg-warning-container text-on-warning-container">
+                                  ⚠️ 缺少日期
+                                </span>
+                              )}
                               {task.isMilestone && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-label-sm bg-tertiary-container text-on-tertiary-container">
                                   里程碑
@@ -165,14 +170,23 @@ export default function TaskList({ onEditTask }: TaskListProps) {
                               )}
                             </div>
                             <div className="mt-1 flex items-center gap-3 text-label-sm text-on-surface-variant">
-                              <span className="flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[16px]">calendar_today</span>
-                                {task.startDate}
-                              </span>
-                              {task.endDate && (
-                                <span className="flex items-center gap-1">
-                                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                                  {task.endDate}
+                              {task.startDate ? (
+                                <>
+                                  <span className="flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[16px]">calendar_today</span>
+                                    {task.startDate}
+                                  </span>
+                                  {task.endDate && (
+                                    <span className="flex items-center gap-1">
+                                      <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                                      {task.endDate}
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="flex items-center gap-1 text-warning">
+                                  <span className="material-symbols-outlined text-[16px]">warning</span>
+                                  未设置日期
                                 </span>
                               )}
                               {task.assignee && (

@@ -110,14 +110,86 @@ const GanttChart = forwardRef<HTMLCanvasElement>((_props, ref) => {
       return
     }
 
-    // 计算时间范围
-    const dates = tasks.flatMap(t => [
-      dayjs(t.startDate),
-      t.endDate ? dayjs(t.endDate) : dayjs(t.startDate).add(7, 'day')
-    ])
+    // 分离有日期和无日期的任务
+    const tasksWithDates = tasks.filter(t => t.startDate)
+    const tasksWithoutDates = tasks.filter(t => !t.startDate)
+    
+    // 调试日志
+    console.log('🎨 [GanttChart] 任务统计:', {
+      总任务数: tasks.length,
+      有日期任务: tasksWithDates.length,
+      无日期任务: tasksWithoutDates.length,
+      任务列表: tasks.map(t => ({
+        name: t.name,
+        startDate: t.startDate,
+        hasStartDate: !!t.startDate,
+        startDateType: typeof t.startDate,
+        startDateLength: t.startDate?.length
+      }))
+    })
+    
+    // 定义警告条高度
+    const WARNING_BAR_HEIGHT = tasksWithoutDates.length > 0 ? 35 : 0
+
+    // 如果没有任何有日期的任务，显示提示
+    if (tasksWithDates.length === 0) {
+      ctx.fillStyle = '#F59E0B'
+      ctx.font = '16px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillText('⚠️ 所有任务都缺少日期信息', rect.width / 2, rect.height / 2 - 40)
+      ctx.fillStyle = '#6B7280'
+      ctx.font = '14px sans-serif'
+      ctx.fillText('请在任务列表中编辑任务，添加开始日期', rect.width / 2, rect.height / 2 - 10)
+      ctx.fillText(`共 ${tasksWithoutDates.length} 个任务需要设置日期`, rect.width / 2, rect.height / 2 + 20)
+      return
+    }
+    
+    // 如果有部分任务缺少日期，在表头下方显示统计信息
+    if (tasksWithoutDates.length > 0) {
+      ctx.fillStyle = '#FEF3C7'
+      ctx.fillRect(0, HEADER_HEIGHT, rect.width, WARNING_BAR_HEIGHT)
+      
+      ctx.fillStyle = '#F59E0B'
+      ctx.font = 'bold 13px sans-serif'
+      ctx.textAlign = 'left'
+      ctx.fillText(
+        `⚠️ 提示：有 ${tasksWithoutDates.length} 个任务缺少日期信息，已在右侧标记`,
+        20,
+        HEADER_HEIGHT + WARNING_BAR_HEIGHT / 2 + 5
+      )
+      
+      // 调整后续绘制的起始位置
+      currentY = HEADER_HEIGHT + WARNING_BAR_HEIGHT
+    }
+
+    // 计算时间范围（只使用有日期的任务）
+    const dates = tasksWithDates.flatMap(t => {
+      // 处理 ISO 8601 格式和 YYYY-MM-DD 格式
+      const start = dayjs(t.startDate)
+      const end = t.endDate ? dayjs(t.endDate) : start.add(7, 'day')
+      return [start, end]
+    })
+    
+    if (dates.length === 0 || dates.some(d => !d.isValid())) {
+      console.error('❌ [GanttChart] 日期解析失败:', {
+        dates: tasksWithDates.map(t => ({ name: t.name, startDate: t.startDate, endDate: t.endDate }))
+      })
+      ctx.fillStyle = '#DC2626'
+      ctx.font = '16px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillText('❌ 日期格式错误，无法渲染甘特图', rect.width / 2, rect.height / 2)
+      return
+    }
+    
     const minDate = dayjs.min(dates)!.subtract(3, 'day')
     const maxDate = dayjs.max(dates)!.add(7, 'day')
     const totalDays = maxDate.diff(minDate, 'day') + 1
+    
+    console.log('📅 [GanttChart] 时间范围:', {
+      minDate: minDate.format('YYYY-MM-DD'),
+      maxDate: maxDate.format('YYYY-MM-DD'),
+      totalDays
+    })
 
     // 布局常量
     const PHASE_WIDTH = 24
@@ -321,76 +393,125 @@ const GanttChart = forwardRef<HTMLCanvasElement>((_props, ref) => {
           ctx.stroke()
         }
         
-        // 绘制任务条
-        const startDate = dayjs(task.startDate)
-        const endDate = task.endDate ? dayjs(task.endDate) : null
-        const startDay = startDate.diff(minDate, 'day')
-        const endDay = endDate ? endDate.diff(minDate, 'day') : totalDays - 1
-        
-        if (startDay < totalDays && endDay >= 0) {
-          const barX = LEFT_WIDTH + Math.max(0, startDay) * dayWidth
-          const barWidth = (Math.min(endDay, totalDays - 1) - Math.max(0, startDay) + 1) * dayWidth
-          const barY = rowY + ROW_HEIGHT / 2 - 9
-          const barHeight = 18
+        // 检查任务是否有日期
+        if (!task.startDate) {
+          // 无日期任务：在时间轴右侧绘制警告标记
+          const warningX = rect.width - 150
+          const warningY = rowY + ROW_HEIGHT / 2
           
-          // 获取负责人颜色
-          const assigneeColor = getAssigneeColor(task.assignee)
+          // 绘制虚线框
+          ctx.strokeStyle = '#F59E0B'
+          ctx.lineWidth = 2
+          ctx.setLineDash([4, 4])
+          ctx.beginPath()
+          ctx.roundRect(warningX, warningY - 12, 140, 24, 4)
+          ctx.stroke()
+          ctx.setLineDash([])
           
-          // 里程碑标记（菱形）
-          if (task.isMilestone) {
-            const centerX = barX + barWidth / 2
-            const centerY = rowY + ROW_HEIGHT / 2
-            const size = 16
+          // 填充背景
+          ctx.fillStyle = '#FEF3C7'
+          ctx.beginPath()
+          ctx.roundRect(warningX, warningY - 12, 140, 24, 4)
+          ctx.fill()
+          
+          // 绘制警告图标和文字
+          ctx.fillStyle = '#F59E0B'
+          ctx.font = 'bold 12px sans-serif'
+          ctx.textAlign = 'left'
+          ctx.fillText('⚠️ 未设置日期', warningX + 8, warningY + 4)
+        } else {
+          // 有日期的任务：正常绘制任务条
+          const startDate = dayjs(task.startDate)
+          const endDate = task.endDate ? dayjs(task.endDate) : null
+          const startDay = startDate.diff(minDate, 'day')
+          const endDay = endDate ? endDate.diff(minDate, 'day') : totalDays - 1
+          
+          console.log(`📊 [任务条] ${task.name}:`, {
+            startDate: task.startDate,
+            endDate: task.endDate,
+            startDay,
+            endDay,
+            totalDays,
+            willDraw: startDay < totalDays && endDay >= 0
+          })
+          
+          if (startDay < totalDays && endDay >= 0) {
+            const barX = LEFT_WIDTH + Math.max(0, startDay) * dayWidth
+            const barWidth = (Math.min(endDay, totalDays - 1) - Math.max(0, startDay) + 1) * dayWidth
+            const barY = rowY + ROW_HEIGHT / 2 - 9
+            const barHeight = 18
             
-            ctx.fillStyle = assigneeColor.bg
-            ctx.beginPath()
-            ctx.moveTo(centerX, centerY - size / 2)
-            ctx.lineTo(centerX + size / 2, centerY)
-            ctx.lineTo(centerX, centerY + size / 2)
-            ctx.lineTo(centerX - size / 2, centerY)
-            ctx.closePath()
-            ctx.fill()
+            console.log(`🎨 [绘制任务条] ${task.name}:`, {
+              barX,
+              barY,
+              barWidth,
+              barHeight,
+              rowY,
+              LEFT_WIDTH,
+              dayWidth,
+              canvasWidth: rect.width,
+              canvasHeight: rect.height
+            })
             
-            // 菱形边框
-            ctx.strokeStyle = assigneeColor.text
-            ctx.lineWidth = 2
-            ctx.stroke()
+            // 获取负责人颜色
+            const assigneeColor = getAssigneeColor(task.assignee)
             
-            // 里程碑图标
-            ctx.fillStyle = assigneeColor.text
-            ctx.font = 'bold 12px sans-serif'
-            ctx.textAlign = 'center'
-            ctx.fillText('💎', centerX, centerY + 4)
-          } else {
-            // 普通任务条背景
-            ctx.fillStyle = assigneeColor.bg
-            if (endDate) {
+            // 里程碑标记（菱形）
+            if (task.isMilestone) {
+              const centerX = barX + barWidth / 2
+              const centerY = rowY + ROW_HEIGHT / 2
+              const size = 16
+              
+              ctx.fillStyle = assigneeColor.bg
               ctx.beginPath()
-              ctx.roundRect(barX, barY, barWidth, barHeight, 4)
-              ctx.fill()
-            } else {
-              // 进行中的任务（无结束日期）
-              ctx.beginPath()
-              ctx.roundRect(barX, barY, barWidth + 10, barHeight, [4, 0, 0, 4])
+              ctx.moveTo(centerX, centerY - size / 2)
+              ctx.lineTo(centerX + size / 2, centerY)
+              ctx.lineTo(centerX, centerY + size / 2)
+              ctx.lineTo(centerX - size / 2, centerY)
+              ctx.closePath()
               ctx.fill()
               
-              // 箭头
+              // 菱形边框
+              ctx.strokeStyle = assigneeColor.text
+              ctx.lineWidth = 2
+              ctx.stroke()
+              
+              // 里程碑图标
               ctx.fillStyle = assigneeColor.text
-              ctx.font = 'bold 13px sans-serif'
-              ctx.textAlign = 'left'
-              ctx.fillText('→', barX + barWidth + 10, barY + barHeight / 2 + 5)
-            }
-            
-            // 任务条文字（开始日期）
-            if (barWidth > 40) {
-              ctx.fillStyle = assigneeColor.text
-              ctx.font = 'bold 10px sans-serif'
-              ctx.textAlign = 'left'
-              ctx.fillText(
-                `${startDate.month() + 1}/${startDate.date()}`,
-                barX + 6,
-                barY + barHeight / 2 + 4
-              )
+              ctx.font = 'bold 12px sans-serif'
+              ctx.textAlign = 'center'
+              ctx.fillText('💎', centerX, centerY + 4)
+            } else {
+              // 普通任务条背景
+              ctx.fillStyle = assigneeColor.bg
+              if (endDate) {
+                ctx.beginPath()
+                ctx.roundRect(barX, barY, barWidth, barHeight, 4)
+                ctx.fill()
+              } else {
+                // 进行中的任务（无结束日期）
+                ctx.beginPath()
+                ctx.roundRect(barX, barY, barWidth + 10, barHeight, [4, 0, 0, 4])
+                ctx.fill()
+                
+                // 箭头
+                ctx.fillStyle = assigneeColor.text
+                ctx.font = 'bold 13px sans-serif'
+                ctx.textAlign = 'left'
+                ctx.fillText('→', barX + barWidth + 10, barY + barHeight / 2 + 5)
+              }
+              
+              // 任务条文字（开始日期）
+              if (barWidth > 40) {
+                ctx.fillStyle = assigneeColor.text
+                ctx.font = 'bold 10px sans-serif'
+                ctx.textAlign = 'left'
+                ctx.fillText(
+                  `${startDate.month() + 1}/${startDate.date()}`,
+                  barX + 6,
+                  barY + barHeight / 2 + 4
+                )
+              }
             }
           }
         }
@@ -403,7 +524,7 @@ const GanttChart = forwardRef<HTMLCanvasElement>((_props, ref) => {
     const taskPositions = new Map<string, { x: number; y: number; width: number }>()
     
     // 先收集所有任务的位置信息
-    let posY = HEADER_HEIGHT
+    let posY = HEADER_HEIGHT + WARNING_BAR_HEIGHT
     phases.forEach((phase) => {
       const phaseTasks = tasksByPhase[phase]
       phaseTasks.forEach((task, taskIndex) => {
@@ -483,22 +604,17 @@ const GanttChart = forwardRef<HTMLCanvasElement>((_props, ref) => {
       ctx.lineWidth = 2
       ctx.globalAlpha = 0.7
       ctx.beginPath()
-      ctx.moveTo(todayX, HEADER_HEIGHT)
+      ctx.moveTo(todayX, HEADER_HEIGHT + WARNING_BAR_HEIGHT)
       ctx.lineTo(todayX, currentY)
       ctx.stroke()
       ctx.globalAlpha = 1
     }
 
-    // 设置画布高度
-    const totalHeight = Math.max(currentY, rect.height)
-    canvas.style.height = `${totalHeight}px`
-    canvas.height = totalHeight * dpr
-    ctx.scale(dpr, dpr)
-    
-    // 如果高度改变，重新渲染
-    if (totalHeight !== rect.height) {
-      setTimeout(() => renderGantt(), 0)
-    }
+    console.log('✅ [GanttChart] 渲染完成:', {
+      currentY,
+      totalHeight: Math.max(currentY, rect.height),
+      rectHeight: rect.height
+    })
   }
 
   return (

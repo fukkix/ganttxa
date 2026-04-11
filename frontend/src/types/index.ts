@@ -2,7 +2,7 @@ export interface Task {
   id: string
   projectId: string
   name: string
-  startDate: string // ISO 8601 format
+  startDate: string | null // ISO 8601 format, null 表示未设置
   endDate: string | null
   assignee: string
   phase: string
