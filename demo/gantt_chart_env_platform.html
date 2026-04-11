@@ -1,0 +1,211 @@
+
+<style>
+  .gantt-wrap { font-family: var(--font-sans); padding: 1rem 0; }
+  .gantt-header-row { display: flex; align-items: stretch; border-bottom: 1px solid var(--color-border-tertiary); }
+  .gantt-row { display: flex; align-items: stretch; border-bottom: 0.5px solid var(--color-border-tertiary); min-height: 38px; }
+  .gantt-row:hover { background: var(--color-background-secondary); }
+  .phase-label-cell { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; padding: 4px 3px; letter-spacing: 0.03em; }
+  .task-cell { flex: 0 0 auto; display: flex; align-items: center; padding: 4px 10px; font-size: 12px; color: var(--color-text-primary); border-right: 0.5px solid var(--color-border-tertiary); }
+  .org-cell { flex: 0 0 auto; display: flex; align-items: center; padding: 4px 8px; font-size: 11px; color: var(--color-text-secondary); border-right: 0.5px solid var(--color-border-tertiary); }
+  .timeline-cell { flex: 1; position: relative; overflow: hidden; }
+  .day-col { position: absolute; top: 0; bottom: 0; border-right: 0.5px solid var(--color-border-tertiary); opacity: 0.4; }
+  .week-col { position: absolute; top: 0; bottom: 0; border-right: 1px solid var(--color-border-secondary); opacity: 0.6; }
+  .month-div { position: absolute; top: 0; bottom: 0; border-left: 1.5px solid var(--color-border-primary); }
+  .bar { position: absolute; top: 50%; transform: translateY(-50%); height: 18px; border-radius: 4px; display: flex; align-items: center; padding: 0 6px; font-size: 10px; white-space: nowrap; overflow: hidden; }
+  .bar-ongoing::after { content: '→'; position: absolute; right: -14px; font-size: 13px; }
+  .today-line { position: absolute; top: 0; bottom: 0; width: 2px; z-index: 10; }
+  .phase-1-bar { background: #9FE1CB; color: #085041; }
+  .phase-2-bar { background: #B5D4F4; color: #0C447C; }
+  .phase-3-bar { background: #CECBF6; color: #3C3489; }
+  .header-label { display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--color-text-secondary); border-right: 0.5px solid var(--color-border-tertiary); flex: 0 0 auto; }
+  .month-header { font-size: 11px; font-weight: 500; color: var(--color-text-primary); }
+</style>
+
+<div class="gantt-wrap">
+  <h2 class="sr-only">环境数据上报平台部署计划甘特图，时间范围2026年4月15日至5月31日，共三个阶段十项任务</h2>
+
+  <div style="display:flex; align-items:center; gap:16px; margin-bottom:14px; flex-wrap:wrap;">
+    <span style="font-size:14px; font-weight:500; color:var(--color-text-primary);">环境数据上报平台部署计划</span>
+    <span style="font-size:12px; color:var(--color-text-secondary);">2026年 4月—5月</span>
+    <span style="flex:1;"></span>
+    <span style="font-size:11px; color:var(--color-text-secondary); display:flex; align-items:center; gap:6px;">
+      <span style="width:10px;height:10px;border-radius:2px;background:#9FE1CB;display:inline-block;"></span>资源准备
+      <span style="width:10px;height:10px;border-radius:2px;background:#B5D4F4;display:inline-block;margin-left:6px;"></span>部署调试
+      <span style="width:10px;height:10px;border-radius:2px;background:#CECBF6;display:inline-block;margin-left:6px;"></span>上线运行
+      <span style="width:2px;height:14px;background:#E24B4A;display:inline-block;margin-left:8px;"></span>今日
+    </span>
+  </div>
+
+  <div id="gantt-container" style="overflow-x:auto; width:100%;">
+    <div id="gantt-inner" style="min-width:700px;"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const START = new Date(2026, 3, 15);
+  const END = new Date(2026, 4, 31);
+  const TODAY = new Date(2026, 3, 10);
+
+  function dayOffset(d) {
+    return Math.floor((d - START) / 86400000);
+  }
+  const TOTAL_DAYS = dayOffset(END) + 1;
+
+  const phases = [
+    {
+      id: 1, label: '资源准备', cls: 'phase-1-bar',
+      color: '#085041', bg: '#9FE1CB',
+      tasks: [
+        { name: '部署相关资源准备', org: '学会', start: new Date(2026,3,15), end: new Date(2026,3,30) },
+        { name: '测试环境测试', org: '中冶', start: new Date(2026,3,15), end: new Date(2026,3,30) },
+        { name: '测试环境发现问题处理', org: '天翼云', start: new Date(2026,3,16), end: new Date(2026,4,9) },
+      ]
+    },
+    {
+      id: 2, label: '部署调试', cls: 'phase-2-bar',
+      color: '#0C447C', bg: '#B5D4F4',
+      tasks: [
+        { name: '正式环境部署', org: '天翼云', start: new Date(2026,4,11), end: new Date(2026,4,14) },
+        { name: '正式环境联动测试', org: '中冶', start: new Date(2026,4,15), end: new Date(2026,4,22) },
+        { name: '线上管理人员整理配置', org: '学会/中冶/天翼云', start: new Date(2026,4,15), end: new Date(2026,4,22) },
+        { name: '相关操作文档准备', org: '天翼云', start: new Date(2026,4,15), end: new Date(2026,4,22) },
+      ]
+    },
+    {
+      id: 3, label: '上线运行', cls: 'phase-3-bar',
+      color: '#3C3489', bg: '#CECBF6',
+      tasks: [
+        { name: '开启第一次上报', org: '三方协同', start: new Date(2026,4,25), end: null },
+        { name: '保障线上环境运维稳定', org: '天翼云', start: new Date(2026,4,25), end: null },
+        { name: '线上问题答疑', org: '中冶', start: new Date(2026,4,25), end: null },
+      ]
+    }
+  ];
+
+  const PHASE_W = 20;
+  const TASK_W = 148;
+  const ORG_W = 76;
+  const LEFT_W = PHASE_W + TASK_W + ORG_W;
+
+  const container = document.getElementById('gantt-inner');
+
+  function pct(day) { return (day / TOTAL_DAYS * 100).toFixed(3) + '%'; }
+
+  function buildGrid() {
+    let html = '';
+    for (let d = 0; d < TOTAL_DAYS; d++) {
+      const date = new Date(START.getTime() + d * 86400000);
+      const dow = date.getDay();
+      const dom = date.getDate();
+      if (dom === 1) {
+        html += `<div class="month-div" style="left:${pct(d)};"></div>`;
+      } else if (dow === 1) {
+        html += `<div class="week-col" style="left:${pct(d)};"></div>`;
+      } else {
+        html += `<div class="day-col" style="left:${pct(d)};"></div>`;
+      }
+    }
+    const todayOff = dayOffset(TODAY);
+    if (todayOff >= 0 && todayOff < TOTAL_DAYS) {
+      html += `<div class="today-line" style="left:${pct(todayOff)};background:#E24B4A;opacity:0.7;"></div>`;
+    }
+    return html;
+  }
+
+  function buildDateHeader() {
+    let days = [];
+    for (let d = 0; d < TOTAL_DAYS; d++) {
+      const date = new Date(START.getTime() + d * 86400000);
+      days.push({ d, date });
+    }
+
+    let monthRows = '';
+    let dayRows = '';
+
+    let prev = null;
+    let segments = [];
+    days.forEach(({d, date}) => {
+      const m = date.getMonth();
+      const y = date.getFullYear();
+      if (!prev || prev.m !== m) {
+        segments.push({ m, y, start: d });
+        if (prev) prev.end = d - 1;
+      }
+      prev = { m, y, d };
+    });
+    if (segments.length > 0) segments[segments.length-1].end = TOTAL_DAYS - 1;
+
+    const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    segments.forEach(seg => {
+      const len = seg.end - seg.start + 1;
+      monthRows += `<div style="position:absolute;left:${pct(seg.start)};width:${pct(len)};height:100%;display:flex;align-items:center;padding-left:4px;font-size:11px;font-weight:500;color:var(--color-text-primary);border-right:1.5px solid var(--color-border-primary);box-sizing:border-box;">${seg.y}年${monthNames[seg.m]}</div>`;
+    });
+
+    days.forEach(({d, date}) => {
+      const dom = date.getDate();
+      const dow = date.getDay();
+      const isWk = dow === 0 || dow === 6;
+      const dayNames = ['日','一','二','三','四','五','六'];
+      if (d % 2 === 0 || dom === 1) {
+        dayRows += `<div style="position:absolute;left:${pct(d)};width:${pct(1)};height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;color:${isWk ? '#D85A30' : 'var(--color-text-secondary)'};opacity:${dom===1?1:0.8};">${dom===1 ? String(dom) : dom}<span style="font-size:8px;opacity:0.7;">${dayNames[dow]}</span></div>`;
+      }
+    });
+
+    return `
+      <div style="position:relative;height:22px;border-bottom:0.5px solid var(--color-border-tertiary);">${monthRows}</div>
+      <div style="position:relative;height:22px;border-bottom:1px solid var(--color-border-tertiary);">${dayRows}</div>
+    `;
+  }
+
+  let html = '';
+
+  html += `<div style="display:flex;border-bottom:1px solid var(--color-border-primary);">
+    <div style="flex:0 0 ${LEFT_W}px;border-right:1px solid var(--color-border-primary);display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:500;color:var(--color-text-secondary);">
+      <span style="flex:0 0 ${PHASE_W}px;text-align:center;">阶段</span>
+      <span style="flex:0 0 ${TASK_W}px;padding-left:6px;">任务</span>
+      <span style="flex:1;padding-left:4px;">责任方</span>
+    </div>
+    <div style="flex:1;position:relative;">${buildDateHeader()}</div>
+  </div>`;
+
+  const gridHTML = buildGrid();
+
+  phases.forEach(phase => {
+    const rowCount = phase.tasks.length;
+    const phaseH = rowCount * 38;
+    const phaseColor = phase.id === 1 ? '#085041' : phase.id === 2 ? '#0C447C' : '#3C3489';
+    const phaseBg = phase.id === 1 ? '#9FE1CB' : phase.id === 2 ? '#B5D4F4' : '#CECBF6';
+
+    let taskRowsHTML = '';
+    phase.tasks.forEach((task, i) => {
+      const s = dayOffset(task.start);
+      const e = task.end ? dayOffset(task.end) : TOTAL_DAYS - 1;
+      const ongoing = !task.end;
+      const w = (e - s + 1) / TOTAL_DAYS * 100;
+      const barRight = ongoing ? `right:0;border-radius:4px 0 0 4px;` : '';
+      const arrowStyle = ongoing ? `; overflow:visible;` : '';
+
+      taskRowsHTML += `
+        <div class="gantt-row">
+          <div style="flex:0 0 ${TASK_W}px;display:flex;align-items:center;padding:0 10px;font-size:12px;color:var(--color-text-primary);border-right:0.5px solid var(--color-border-tertiary);">${task.name}</div>
+          <div style="flex:0 0 ${ORG_W}px;display:flex;align-items:center;padding:0 8px;font-size:11px;color:var(--color-text-secondary);border-right:1px solid var(--color-border-primary);">${task.org}</div>
+          <div style="flex:1;position:relative;overflow:${ongoing?'visible':'hidden'};">
+            ${gridHTML}
+            <div class="bar ${phase.cls}" style="left:${pct(s)};width:${ongoing ? `calc(${pct(e - s + 1)} + 10px)` : pct(e - s + 1)};${ongoing ? 'border-radius:4px 0 0 4px;' : ''}${arrowStyle}">
+              ${w > 8 ? `<span style="font-size:10px;color:${phaseColor};font-weight:500;">${task.start.getMonth()+1}/${task.start.getDate()}</span>` : ''}
+            </div>
+            ${ongoing ? `<div style="position:absolute;left:calc(${pct(s + e - s + 1)} + 10px);top:50%;transform:translateY(-50%);font-size:13px;color:${phaseColor};opacity:0.8;font-weight:500;">→</div>` : ''}
+          </div>
+        </div>`;
+    });
+
+    html += `<div style="display:flex;border-bottom:1px solid var(--color-border-primary);">
+      <div style="flex:0 0 ${PHASE_W}px;writing-mode:vertical-rl;transform:rotate(180deg);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;background:${phaseBg};color:${phaseColor};letter-spacing:0.05em;border-right:0.5px solid var(--color-border-tertiary);">${phase.label}</div>
+      <div style="flex:1;display:flex;flex-direction:column;">${taskRowsHTML}</div>
+    </div>`;
+  });
+
+  container.innerHTML = html;
+})();
+</script>

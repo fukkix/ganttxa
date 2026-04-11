@@ -42,6 +42,12 @@ export default function TaskForm({ task, onClose }: TaskFormProps) {
       return
     }
 
+    // 验证日期范围
+    if (formData.endDate && formData.startDate > formData.endDate) {
+      alert('结束日期不能早于开始日期')
+      return
+    }
+
     const taskData: Task = {
       id: task?.id || `task_${Date.now()}`,
       projectId: task?.projectId || 'temp',
@@ -96,7 +102,17 @@ export default function TaskForm({ task, onClose }: TaskFormProps) {
               <input
                 type="date"
                 value={formData.startDate}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                onChange={(e) => {
+                  const newStartDate = e.target.value
+                  setFormData({ 
+                    ...formData, 
+                    startDate: newStartDate,
+                    // 如果结束日期早于新的开始日期，自动调整结束日期
+                    endDate: formData.endDate && formData.endDate < newStartDate 
+                      ? newStartDate 
+                      : formData.endDate
+                  })
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
@@ -108,9 +124,13 @@ export default function TaskForm({ task, onClose }: TaskFormProps) {
               <input
                 type="date"
                 value={formData.endDate}
+                min={formData.startDate}
                 onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
+              {formData.endDate && formData.endDate < formData.startDate && (
+                <p className="text-xs text-red-600 mt-1">结束日期不能早于开始日期</p>
+              )}
             </div>
           </div>
 
@@ -157,6 +177,35 @@ export default function TaskForm({ task, onClose }: TaskFormProps) {
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              依赖任务
+            </label>
+            <select
+              multiple
+              value={task?.dependencies || []}
+              onChange={(e) => {
+                const selected = Array.from(e.target.selectedOptions, option => option.value)
+                if (task) {
+                  updateTask(task.id, { ...task, dependencies: selected })
+                }
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 max-h-32"
+            >
+              <option value="" disabled>选择依赖的任务（可多选）</option>
+              {useProjectStore.getState().tasks
+                .filter(t => t.id !== task?.id)
+                .map(t => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              按住 Ctrl/Cmd 可多选。依赖任务完成后才能开始此任务。
+            </p>
+          </div>
+
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -166,7 +215,7 @@ export default function TaskForm({ task, onClose }: TaskFormProps) {
               className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
             />
             <label htmlFor="isMilestone" className="ml-2 text-sm text-gray-700">
-              标记为里程碑
+              标记为里程碑 💎
             </label>
           </div>
 

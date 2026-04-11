@@ -5,6 +5,7 @@ import TaskForm from '../components/TaskForm'
 import TaskList from '../components/TaskList'
 import GanttChart from '../components/GanttChart'
 import GanttControls from '../components/GanttControls'
+import GanttLegend from '../components/GanttLegend'
 import ShareDialog from '../components/ShareDialog'
 import ExportDialog from '../components/ExportDialog'
 import FileUploadWithParsing from '../components/FileUploadWithParsing'
@@ -347,6 +348,7 @@ export default function EditorPage() {
             {/* 右侧甘特图区域 */}
             <main className="flex-1 flex flex-col overflow-hidden bg-surface">
               <GanttControls />
+              <GanttLegend />
               <div className="flex-1 overflow-auto p-4">
                 <GanttChart ref={canvasRef} />
               </div>

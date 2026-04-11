@@ -6,6 +6,7 @@ export default function RegisterPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -13,6 +14,19 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // 验证密码匹配
+    if (password !== confirmPassword) {
+      setError('两次输入的密码不一致')
+      return
+    }
+
+    // 验证密码长度
+    if (password.length < 6) {
+      setError('密码长度至少为 6 位')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -97,8 +111,25 @@ export default function RegisterPage() {
                          focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
                 placeholder="至少 6 位"
               />
+            </div>
+
+            <div>
+              <label htmlFor="confirmPassword" className="block text-label-md text-on-surface-variant mb-2">
+                确认密码
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full px-4 py-3 bg-surface-container-highest text-on-surface rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+                placeholder="再次输入密码"
+              />
               <p className="mt-2 text-xs text-on-surface-variant">
-                密码长度至少为 6 位
+                请再次输入密码以确认
               </p>
             </div>
 
