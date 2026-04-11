@@ -105,10 +105,13 @@ ganttxa/
 
 ## 开发文档
 
+- [快速开始](QUICKSTART.md)
+- [功能说明](docs/FEATURES.md)
 - [环境搭建指南](docs/SETUP.md)
-- [开发规范](docs/DEVELOPMENT.md)
 - [API 文档](docs/API.md)
-- [数据库设计](docs/DATABASE.md)
+- [设计指南](docs/DESIGN-GUIDE.md)
+- [AI 配置指南](docs/OPENROUTER-SETUP.md)
+- [开发进度](DEVELOPMENT-PROGRESS.md)
 
 ## 开发计划
 

@@ -15,6 +15,7 @@ interface ProjectState {
   updateTask: (id: string, updates: Partial<Task>) => void
   deleteTask: (id: string) => void
   setTasks: (tasks: Task[]) => void
+  reorderTasks: (tasks: Task[]) => void
   updateGanttConfig: (config: Partial<GanttConfig>) => void
   setSaving: (saving: boolean) => void
   setLastSaved: (date: Date) => void
@@ -79,6 +80,16 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   }),
   
   setTasks: (tasks) => set((state) => {
+    if (state.currentProject) {
+      return {
+        tasks,
+        currentProject: { ...state.currentProject, tasks }
+      }
+    }
+    return { tasks }
+  }),
+
+  reorderTasks: (tasks) => set((state) => {
     if (state.currentProject) {
       return {
         tasks,
