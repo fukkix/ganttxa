@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: ganttxa-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ganttxa
+      POSTGRES_USER: ganttxa_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+      - ./database/migrations:/docker-entrypoint-initdb.d/migrations
+    networks:
+      - ganttxa-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ganttxa_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 后端服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: ganttxa-backend
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://ganttxa_user:${DB_PASSWORD}@postgres:5432/ganttxa
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ganttxa-network
+    ports:
+      - "3000:3000"
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: ganttxa-frontend
+    restart: always
+    networks:
+      - ganttxa-network
+    ports:
+      - "8080:80"
+
+networks:
+  ganttxa-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
